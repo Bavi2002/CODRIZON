@@ -45,7 +45,7 @@ const login = async (req, res) => {
 const profile = async (req, res) => {
   try {
     if (!req.User) {
-        return res.status(401).json({ message: "Not authorized" });
+      return res.status(401).json({ message: "Not authorized" });
     }
     res.json(req.User);
   } catch (error) {
@@ -53,4 +53,39 @@ const profile = async (req, res) => {
   }
 };
 
-module.exports = { register, login, profile };
+const update = async (req, res) => {
+  const { name, email, password } = req.body;
+
+  try {
+    const user = await User.findById(req.User._id);
+
+    if (!user) return res.status(404).json({ message: "User not Found" });
+
+    if (name) user.name = name;
+    if (email) user.email = email;
+    if (password) user.password = await bcrypt.hash(password, 10);
+
+    const updateUser = await user.save();
+    res
+      .status(200)
+      .json({ message: "User Updated Successfully", user: updateUser });
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
+const deleteUser = async (req, res) => {
+  try {
+    const user = await User.findById(req.User._id);
+
+    if (!user) return res.status(404).json({ message: "User not Found" });
+
+    await user.deleteOne();
+
+    res.status(200).json({ message: "User deleted successfully" });
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
+module.exports = { register, login, profile, update, deleteUser };
